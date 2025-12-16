@@ -1,10 +1,10 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Eye, EyeOff, Mail, Lock, LogIn, ArrowRight, CircleCheckBig } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, LogIn, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { toast } from 'react-hot-toast'
+import { toast } from 'sonner'
 
 const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false)
@@ -32,20 +32,21 @@ const LoginPage = () => {
             // Add your actual login logic here
             if (formData.email && formData.password) {
                 toast.success('Login successful!', {
-                    icon: <CircleCheckBig className='size-5 text-green-600' />,
+                    description: 'Welcome back! Redirecting...',
                     duration: 3000,
                 })
                 console.log('Login attempt:', formData)
+                // Add your redirect logic here
             } else {
                 toast.error('Please fill in all fields', {
-                    icon: '❌',
+                    description: 'Email and password are required',
                     duration: 3000,
                 })
             }
         } catch (error) {
-            toast.error('Login failed. Please try again.', {
-                icon: '❌',
-                duration: 3000,
+            toast.error('Login failed', {
+                description: 'Please try again or contact support',
+                duration: 4000,
             })
         } finally {
             setIsLoading(false)
@@ -54,15 +55,15 @@ const LoginPage = () => {
 
     const handleForgotPassword = () => {
         if (!formData.email) {
-            toast.error('Please enter your email first', {
-                icon: '📧',
+            toast.error('Email required', {
+                description: 'Please enter your email address first',
                 duration: 3000,
             })
             return
         }
 
-        toast.success(`Password reset link sent to ${formData.email}`, {
-            icon: '✉️',
+        toast.success('Password reset link sent', {
+            description: `Check your inbox at ${formData.email}`,
             duration: 4000,
         })
     }
@@ -73,7 +74,6 @@ const LoginPage = () => {
 
     return (
         <>
-
             <div className="min-h-screen flex items-center justify-center bg-background p-4 dark">
                 <div className="w-full max-w-md space-y-8">
                     {/* Header Section */}
