@@ -94,10 +94,10 @@ const LoginPage = () => {
                         <div className="card-body p-8 space-y-6">
                             <form onSubmit={handleSubmit} className="space-y-5">
                                 {/* Email/Adminname Input */}
-                                <div className="space-y-4">
+                                <div className="space-y-2">
                                     <label
                                         htmlFor="email"
-                                        className="text-sm font-medium text-foreground"
+                                        className="block text-sm font-medium text-foreground"
                                     >
                                         Email/AdminName
                                     </label>
@@ -123,7 +123,7 @@ const LoginPage = () => {
                                 <div className="space-y-2">
                                     <label
                                         htmlFor="password"
-                                        className="text-sm font-medium text-foreground"
+                                        className="block text-sm font-medium text-foreground"
                                     >
                                         Password
                                     </label>
