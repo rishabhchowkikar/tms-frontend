@@ -6,13 +6,24 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 
+// new imports
+import { useDispatch, useSelector } from 'react-redux'
+import { RootState, AppDispatch } from "@/store/store"
+import { login } from "@/store/authSlice"
+import { useRouter } from 'next/navigation'
+
 const LoginPage = () => {
+    const router = useRouter()
     const [showPassword, setShowPassword] = useState(false)
-    const [isLoading, setIsLoading] = useState(false)
+    // const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState({
         email: '',
         password: ''
     })
+
+    // hooks
+    const dispatch = useDispatch<AppDispatch>();
+    const { error, isLoading } = useSelector((state: RootState) => state.auth)
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({
@@ -23,33 +34,38 @@ const LoginPage = () => {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-        setIsLoading(true)
 
-        // Simulate API call
-        try {
-            await new Promise(resolve => setTimeout(resolve, 1500))
-
-            // Add your actual login logic here
-            if (formData.email && formData.password) {
-                toast.success('Login successful!', {
-                    description: 'Welcome back! Redirecting...',
-                    duration: 3000,
-                })
-                console.log('Login attempt:', formData)
-                // Add your redirect logic here
-            } else {
-                toast.error('Please fill in all fields', {
-                    description: 'Email and password are required',
-                    duration: 3000,
-                })
-            }
-        } catch (error) {
-            toast.error('Login failed', {
-                description: 'Please try again or contact support',
-                duration: 4000,
+        // Basic validation
+        if (!formData.email || !formData.password) {
+            toast.error('Missing fields', {
+                description: 'Please enter both identifier and password',
             })
-        } finally {
-            setIsLoading(false)
+            return
+        }
+
+
+        try {
+            await dispatch(
+                login({
+                    identifier: formData.email.trim(),  // This matches your backend "identifier"
+                    password: formData.password,
+                })
+            ).unwrap()  // This throws if login fails
+
+            // Success!
+            toast.success('Login successful!', {
+                description: 'Welcome back! Redirecting to dashboard...',
+                duration: 3000,
+            })
+
+            // Redirect to dashboard
+            router.push('/dashboard')  // Change to your actual dashboard route
+        } catch (err) {
+            // Error is already set in Redux state via rejected case
+            toast.error('Login failed', {
+                description: error || 'Invalid credentials. Please try again.',
+                duration: 5000,
+            })
         }
     }
 
