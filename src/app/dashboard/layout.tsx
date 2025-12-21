@@ -1,10 +1,24 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import AppSidebar from '@/components/common/Sidebar'
+import { useRouter } from 'next/navigation'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/store/store'
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
+    const router = useRouter()
+    const { isAuth, isInitialized } = useSelector((s: RootState) => s.auth)
+
+    useEffect(() => {
+        if (isInitialized && !isAuth) {
+          router.replace('/login')
+        }
+      }, [isAuth, isInitialized, router])
+    
+      if (!isInitialized) return null
+
     return (
         <SidebarProvider>
             <AppSidebar />

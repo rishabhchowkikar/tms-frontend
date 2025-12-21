@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { loginAdmin, LoginCredentials } from "@/utils/api/auth";
+import { getCurrentUser, loginAdmin, LoginCredentials, logoutAdmin } from "@/utils/api/auth";
 
 export interface Admin {
     id: string;
@@ -14,6 +14,7 @@ interface AuthState {
     isAuth: boolean;
     isLoading: boolean;
     error: string | null;
+    isInitialized: boolean;
 }
 
 const initialState: AuthState = {
@@ -21,10 +22,12 @@ const initialState: AuthState = {
     isAuth: false,
     isLoading: false,
     error: null,
+    isInitialized: false,
 };
 
+// login thunk
 export const login = createAsyncThunk(
-    'auth/login',
+    'auth/login', //  this is not endpoint it is dispatch action type signal distpatch when to call this action function to redux
     async (credentials: LoginCredentials, { rejectWithValue }) => {  // ← Fixed typo
         try {
             const res = await loginAdmin(credentials);
@@ -37,6 +40,37 @@ export const login = createAsyncThunk(
         }
     }
 );
+
+// check auth thunk
+export const checkAuth = createAsyncThunk(
+    'auth/checkAuth',
+    async (_, { rejectWithValue }) => {
+        try {
+            const res = await getCurrentUser()
+            if (!res.success) throw new Error(res.message);
+
+            return res.data.admin;
+        } catch (error: any) {
+            // If error, user is not authenticated (cookie invalid/expired)
+            return rejectWithValue(null); // Return null instead of error message
+        }
+    }
+)
+
+// logout thunk
+export const logoutUser = createAsyncThunk("auth/logout", async (_, { rejectWithValue }) => {
+    try {
+        await logoutAdmin();
+        return true;
+    } catch (error: any) {
+        // If backend logout fails (e.g., not superadmin), 
+        // we still want to clear client-side state
+        // So we don't reject, just return success
+        // The error will be logged but logout will proceed
+        console.warn('Backend logout failed, clearing client-side state:', error.message);
+        return true;
+    }
+})
 
 const authSlice = createSlice({
     name: "auth",
@@ -54,6 +88,7 @@ const authSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            // case for login
             .addCase(login.pending, (state) => {
                 state.isLoading = true;
                 state.error = null;
@@ -66,7 +101,47 @@ const authSlice = createSlice({
             .addCase(login.rejected, (state, action) => {
                 state.isLoading = false;
                 state.error = action.payload as string;
-            });
+            })
+
+            // checking auth case
+            .addCase(checkAuth.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(checkAuth.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.user = action.payload;
+                state.isAuth = true,
+                    state.isInitialized = true;
+                state.error = null;
+            })
+            .addCase(checkAuth.rejected, (state) => {
+                state.isLoading = false;
+                state.user = null;
+                state.isAuth = false;
+                state.isInitialized = true;
+                state.error = null;
+            })
+
+            // logout case
+            .addCase(logoutUser.pending, (state)=>{
+                state.isLoading = true;
+                state.error = null;
+            })
+            .addCase(logoutUser.fulfilled, (state)=>{
+                state.isLoading = false;
+                state.user = null;
+                state.isAuth = false;
+                localStorage.removeItem("adminToken");
+                state.error = null;
+            })
+            .addCase(logoutUser.rejected, (state, action)=>{
+                 // Even if backend logout fails, clear client state
+                 state.isLoading = false;
+                 state.user = null;
+                 state.isAuth = false;
+                 state.error = null;
+                 localStorage.removeItem("adminToken");
+            })
     },
 });
 
